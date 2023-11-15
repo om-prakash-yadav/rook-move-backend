@@ -5,23 +5,19 @@ import { Types } from "mongoose";
 class CreateAGameController {
   public async createNewGame(req: Request, res: Response): Promise<void> {
     try {
-      const { playerName, socketId, opponentId } = req.body; // Add opponentId to the request body
-      console.log(playerName, socketId);
+      const { playerName, socketId } = req.body;
 
       if (!playerName || !socketId) {
-        res.status(400).json({ error: "Playername or SocketId missing in request" });
+        res
+          .status(400)
+          .json({ error: "Playername or SocketId missing in request" });
         return;
       }
-
       const newGame = new Game({
         players: [
           {
             playerName,
             socketId,
-          },
-          {
-            playerName: "", // Set opponent's name to an empty string initially
-            socketId: opponentId, // Use the provided opponentId
           },
         ],
         gameState: {
@@ -32,26 +28,14 @@ class CreateAGameController {
 
       await newGame.save();
 
-      res.status(200).json({ message: "Game created successfully", game: newGame });
+      res
+        .status(200)
+        .json({ message: "Game created successfully", game: newGame });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: "Internal Server Error" });
     }
   }
-  public async getAvailablePlayers(req: Request, res: Response): Promise<void> {
-    try {
-      const availablePlayers = await Game.find({
-        "gameState.isGameStarted": false,
-        $expr: { $eq: [{ $size: "$players" }, 1] },
-      }).select("players");
-
-      res.status(200).json({ message: "Available players", players: availablePlayers });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  }
-
   public async checkGameExists(req: Request, res: Response): Promise<void> {
     try {
       const { gameId } = req.body;
